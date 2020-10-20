@@ -18,24 +18,26 @@ package com.example.android.dessertpusher
 
 import android.content.ActivityNotFoundException
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ShareCompat
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import com.example.android.dessertpusher.databinding.ActivityMainBinding
 import timber.log.Timber
+
+// OnSaveInstanceState Bundle Keys
+const val KEY_REVENUE = "key_revenue"
+const val KEY_AMOUNT_SOLD = "key_amount_sold"
+const val KEY_DESSERT_TIMER = "key_dessert_timer"
 
 class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     private var revenue = 0
     private var dessertsSold = 0
     private lateinit var dessertTimer: DessertTimer
-
 
     // Contains all the views
     private lateinit var binding: ActivityMainBinding
@@ -68,9 +70,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     private var currentDessert = allDesserts[0]
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Timber.i("onCreate called")
-        dessertsSold = 0
         super.onCreate(savedInstanceState)
+        Timber.i("onCreate called")
 
         // Use Data Binding to get reference to the views
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
@@ -82,6 +83,13 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         //creating dessert timer
         dessertTimer = DessertTimer(this.lifecycle)
 
+        if(savedInstanceState != null) {
+            revenue = savedInstanceState.getInt(KEY_REVENUE)
+            dessertsSold = savedInstanceState.getInt(KEY_AMOUNT_SOLD)
+            dessertTimer.secondsCount = savedInstanceState.getInt(KEY_DESSERT_TIMER)
+            showCurrentDessert()
+        }
+
         // Set the TextViews to the right values
         binding.revenue = revenue
         binding.amountSold = dessertsSold
@@ -91,6 +99,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
 
     }
+
 
     /**
      * Updates the score when the dessert is clicked. Possibly shows a new dessert.
@@ -103,6 +112,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
 
         binding.revenue = revenue
         binding.amountSold = dessertsSold
+
 
         // Show the next dessert
         showCurrentDessert()
@@ -159,6 +169,20 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         return super.onOptionsItemSelected(item)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(KEY_REVENUE, revenue)
+        outState.putInt(KEY_AMOUNT_SOLD, dessertsSold)
+        outState.putInt(KEY_DESSERT_TIMER, dessertTimer.secondsCount)
+        super.onSaveInstanceState(outState)
+        Timber.i("onSaveInstanceState called")
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        Timber.i("onRestoreInstanceState called")
+    }
+
+    //Lifecycle Methods
     override fun onStart() {
         super.onStart()
         Timber.i("onStart called")
